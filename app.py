@@ -2,10 +2,10 @@ import streamlit as st
 import numpy as np
 import pickle
 
-# Page setup
+# ---------------- Page Setup ---------------- #
 st.set_page_config(page_title="Crop Yield Prediction", layout="centered")
 
-# Simple background image
+# ---------------- Background + Black Text Styling ---------------- #
 st.markdown(
     """
     <style>
@@ -14,12 +14,33 @@ st.markdown(
         background-size: cover;
         background-position: center;
     }
+
+    /* Make all labels black */
+    label {
+        color: black !important;
+        font-weight: bold;
+    }
+
+    /* Make input text black */
+    input {
+        color: black !important;
+    }
+
+    /* Number input text */
+    div[data-baseweb="input"] input {
+        color: black !important;
+    }
+
+    /* Title color */
+    h1 {
+        color: black !important;
+    }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-# Load models safely
+# ---------------- Load Models ---------------- #
 @st.cache_resource
 def load_models():
     model = pickle.load(open("Rs.pkl", "rb"))
@@ -28,12 +49,10 @@ def load_models():
 
 model, preprocessor = load_models()
 
-# App Title
+# ---------------- UI ---------------- #
 st.title("🌾 Crop Yield Prediction")
-
 st.write("Fill the details below to predict crop yield.")
 
-# Inputs
 Area = st.text_input("Area")
 Item = st.text_input("Crop Type")
 Year = st.number_input("Year", min_value=1900, max_value=2100)
@@ -41,15 +60,16 @@ Rainfall = st.number_input("Average Rainfall (mm/year)", min_value=0.0)
 Temp = st.number_input("Average Temperature (°C)")
 Pesticide = st.number_input("Pesticide Used (tonnes)", min_value=0.0)
 
-# Prediction
+# ---------------- Prediction ---------------- #
 if st.button("Predict Yield"):
     if Area and Item:
         try:
             features = np.array([[Area, Item, Year, Rainfall, Temp, Pesticide]], dtype=object)
             transformed = preprocessor.transform(features)
             prediction = model.predict(transformed)
+
             st.success(f"Predicted Yield: {round(float(prediction[0]), 2)} hg/ha")
-        except Exception as e:
+        except Exception:
             st.error("Prediction error occurred.")
     else:
         st.warning("Please fill all required fields.")
