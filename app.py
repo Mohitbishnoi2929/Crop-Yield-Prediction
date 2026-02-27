@@ -17,7 +17,7 @@ style="text-decoration:none; color:black; font-weight:bold;">
 
 <br><br>
 
-<a href="/dashboard_overview" 
+<a href="/Dashboard_Overview" 
 title="View overall analytics and visual insights of crop production data"
 style="text-decoration:none; color:black; font-weight:bold;">
 📊 Dashboard Overview
@@ -25,7 +25,7 @@ style="text-decoration:none; color:black; font-weight:bold;">
 
 <br><br>
 
-<a href="/climate_impact" 
+<a href="/Climate_Impact" 
 title="Analyze how rainfall, temperature and pesticides affect crop yield"
 style="text-decoration:none; color:black; font-weight:bold;">
 🌦 Climate Impact
