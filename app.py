@@ -9,21 +9,24 @@ st.markdown("## 🚀 Navigate Through the Platform")
 st.markdown("""
 <div style="font-size:18px; line-height:2.2;">
 
-<a href="/Prediction" title="Go to crop yield prediction page where you can input climate and soil data to predict yield" 
+<a href="/predictive_page" 
+title="Go to crop yield prediction page where you can input climate and soil data to predict yield"
 style="text-decoration:none; color:black; font-weight:bold;">
 🔮 Prediction
 </a>
 
-<br>
+<br><br>
 
-<a href="/Dashboard_Overview" title="View overall analytics and visual insights of crop production data" 
+<a href="/dashboard_overview" 
+title="View overall analytics and visual insights of crop production data"
 style="text-decoration:none; color:black; font-weight:bold;">
 📊 Dashboard Overview
 </a>
 
-<br>
+<br><br>
 
-<a href="/Climate_Impact" title="Analyze how rainfall, temperature and pesticides affect crop yield" 
+<a href="/climate_impact" 
+title="Analyze how rainfall, temperature and pesticides affect crop yield"
 style="text-decoration:none; color:black; font-weight:bold;">
 🌦 Climate Impact
 </a>
