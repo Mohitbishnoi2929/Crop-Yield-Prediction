@@ -1,39 +1,25 @@
-from flask import Flask,request,render_template
+from flask import Blueprint, request, render_template
 import numpy as np
-import pandas as pd
 import pickle
 
-#loading models
-Rs=pickle.load(open('Rs.pkl','rb'))
-preprocessor=pickle.load(open('preprocessor.pkl','rb'))
+# Create Blueprint
+predict_bp = Blueprint('predict', __name__)
 
-# creating flask app
+# Load models
+Rs = pickle.load(open('Rs.pkl','rb'))
+preprocessor = pickle.load(open('preprocessor.pkl','rb'))
 
-app= Flask(__name__)
-
-@app.route('/')
-def index() :
-    return  render_template('index.html')
-@app.route('/predict',methods=['POST'])
+@predict_bp.route('/predict', methods=['POST'])
 def predict():
-    if request.method=='POST':
-        Area = request.form['Area']
-        Item = request.form['Item']
-        Year = request.form['Year']
-        average_rain_fall_mm_per_year = request.form['average_rain_fall_mm_per_year']
-        avg_temp =request.form['avg_temp']
-        Pesticide_in_tonnes = request.form['Pesticide_in_tonnes']
+    Area = request.form['Area']
+    Item = request.form['Item']
+    Year = request.form['Year']
+    Rainfall = request.form['average_rain_fall_mm_per_year']
+    Temp = request.form['avg_temp']
+    Pesticide = request.form['Pesticide_in_tonnes']
 
-        features = np.array([[Area, Item, Year, average_rain_fall_mm_per_year, avg_temp, Pesticide_in_tonnes]],
-                            dtype=object)
+    features = np.array([[Area, Item, Year, Rainfall, Temp, Pesticide]], dtype=object)
+    transformed = preprocessor.transform(features)
+    prediction = Rs.predict(transformed)
 
-        transformed_features = preprocessor.transform(features)
-        predicted_value = Rs.predict(transformed_features).reshape(1, -1)
-
-        return render_template('index.html',predicted_value=predicted_value)
-
-
-#python main
-
-if __name__=='__main__':
-    app.run(debug=True)
+    return render_template('index.html', predicted_value=prediction[0])
