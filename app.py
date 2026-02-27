@@ -9,7 +9,7 @@ st.markdown("## 🚀 Navigate Through the Platform")
 st.markdown("""
 <div style="font-size:18px; line-height:2.2;">
 
-<a href="/predictive_page" 
+<a href="/Predictive_page" 
 title="Go to crop yield prediction page where you can input climate and soil data to predict yield"
 style="text-decoration:none; color:black; font-weight:bold;">
 🔮 Prediction
