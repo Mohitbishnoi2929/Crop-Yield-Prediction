@@ -2,8 +2,7 @@ import streamlit as st
 import numpy as np
 import pickle
 
-# ---------------- Page Setup ---------------- #
-st.set_page_config(page_title="Crop Yield Prediction", layout="centered")
+
 
 # ---------------- Background + Black Styling ---------------- #
 st.markdown(
