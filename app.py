@@ -10,12 +10,12 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     if st.button("🔮 Prediction"):
-        st.switch_page("pages/Predictive_page.py")
+        st.switch_page("Predictive page")
 
 with col2:
     if st.button("📊 Dashboard Overview"):
-        st.switch_page("pages/Dashboard_Overview.py")
+        st.switch_page("Dashboard Overview")
 
 with col3:
     if st.button("🌦 Climate Impact"):
-        st.switch_page("pages/Climate_Impact.py")
+        st.switch_page("Climate Impact")
