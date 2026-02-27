@@ -4,37 +4,43 @@ import os
 st.set_page_config(page_title="Crop Yield Dashboard", layout="wide")
 
 st.title("🌾 Crop Yield Analytics Platform")
-st.markdown("---")
 
-# Navigation Columns
+# --- DEBUGGING UTILITY ---
+# This helper finds the file regardless of where it is hidden
+def try_switch(page_name):
+    # Potential paths to check
+    paths_to_try = [
+        page_name, 
+        os.path.join("pages", page_name),
+        page_name.lower(),
+        os.path.join("pages", page_name.lower())
+    ]
+    
+    for path in paths_to_try:
+        if os.path.exists(path):
+            st.switch_page(path)
+            return
+            
+    st.error(f"❌ Cannot find '{page_name}'. Checked: {paths_to_try}")
+    st.info("💡 Tip: Check if you spelled the filename correctly on GitHub (including .py)")
+
+# --- UI LAYOUT ---
 col1, col2, col3 = st.columns(3)
 
 with col1:
     if st.button("🔮 Prediction", use_container_width=True):
-        # We try both common paths to be safe
-        if os.path.exists("pages/Predictive_page.py"):
-            st.switch_page("pages/Predictive_page.py")
-        else:
-            st.switch_page("Predictive_page.py")
+        try_switch("Predictive_page.py")
 
 with col2:
     if st.button("📊 Dashboard Overview", use_container_width=True):
-        if os.path.exists("pages/Dashboard_Overview.py"):
-            st.switch_page("pages/Dashboard_Overview.py")
-        else:
-            st.switch_page("Dashboard_Overview.py")
+        try_switch("Dashboard_Overview.py")
 
 with col3:
     if st.button("🌦 Climate Impact", use_container_width=True):
-        if os.path.exists("pages/Climate_Impact.py"):
-            st.switch_page("pages/Climate_Impact.py")
-        else:
-            st.switch_page("Climate_Impact.py")
+        try_switch("Climate_Impact.py")
 
-# DEBUG SECTION (Only shows if something is wrong)
-with st.expander("🛠 Debug: Check File Structure"):
-    st.write("Current Files in Root:")
-    st.write(os.listdir("."))
+# --- FILE LISTER (Check this if it fails) ---
+with st.expander("🔍 Click here to see what files are actually on the server"):
+    st.write("Files in main folder:", os.listdir("."))
     if os.path.exists("pages"):
-        st.write("Files in 'pages' folder:")
-        st.write(os.listdir("pages"))
+        st.write("Files in 'pages' folder:", os.listdir("pages"))
