@@ -5,7 +5,7 @@ import pickle
 # ---------------- Page Setup ---------------- #
 st.set_page_config(page_title="Crop Yield Prediction", layout="centered")
 
-# ---------------- Background + Black Text Styling ---------------- #
+# ---------------- Background + Black Styling ---------------- #
 st.markdown(
     """
     <style>
@@ -15,25 +15,33 @@ st.markdown(
         background-position: center;
     }
 
-    /* Make all labels black */
     label {
         color: black !important;
         font-weight: bold;
     }
 
-    /* Make input text black */
     input {
         color: black !important;
     }
 
-    /* Number input text */
     div[data-baseweb="input"] input {
         color: black !important;
     }
 
-    /* Title color */
     h1 {
         color: black !important;
+    }
+
+    /* Prediction result box */
+    .result-box {
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: 15px;
+        font-size: 20px;
+        font-weight: bold;
+        color: black;
+        text-align: center;
     }
     </style>
     """,
@@ -68,7 +76,11 @@ if st.button("Predict Yield"):
             transformed = preprocessor.transform(features)
             prediction = model.predict(transformed)
 
-            st.success(f"Predicted Yield: {round(float(prediction[0]), 2)} hg/ha")
+            st.markdown(
+                f"<div class='result-box'>Predicted Crop Yield: {round(float(prediction[0]), 2)} hg/ha</div>",
+                unsafe_allow_html=True
+            )
+
         except Exception:
             st.error("Prediction error occurred.")
     else:
