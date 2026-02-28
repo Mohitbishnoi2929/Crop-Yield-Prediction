@@ -9,7 +9,7 @@ import os
 # --- 1. PAGE CONFIGURATION ---
 st.set_page_config(page_title="Crop Intelligence Hub", layout="wide")
 
-# --- 2. HIGH-VISIBILITY FROSTED GLASS STYLING ---
+# --- 2. ENHANCED BLURRY BACKGROUND & STYLING ---
 st.markdown("""
     <style>
     .stApp {
@@ -18,24 +18,28 @@ st.markdown("""
         background-position: center;
         background-attachment: fixed;
     }
-    /* The Frosted Glass Container - Makes Black Text Pop */
+    
+    /* Increased blur and slight opacity adjustment for better axis visibility */
     .main .block-container {
-        background-color: rgba(255, 255, 255, 0.82); 
+        background-color: rgba(255, 255, 255, 0.85); 
         border-radius: 20px;
         padding: 40px;
         margin-top: 25px;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(12px); /* Increased blur from 8px to 12px */
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
     }
-    /* Force Ultra-Black Bold Text for everything */
+    
+    /* Force Deep Black Bold Text */
     [data-testid="stMetricValue"], [data-testid="stMetricLabel"], 
     h1, h2, h3, p, label, .stSelectbox label, .stNumberInput label { 
         color: #000000 !important; 
-        font-weight: 800 !important; 
+        font-weight: 900 !important; /* Extra bold for visibility */
     }
+
     .result-box {
-        background-color: rgba(0, 0, 0, 0.05);
+        background-color: rgba(0, 0, 0, 0.08);
         padding: 25px;
         border-radius: 12px;
         border: 3px solid #000000;
@@ -44,34 +48,38 @@ st.markdown("""
         color: #000000;
         font-weight: 900;
     }
-    /* Adjust Tab text color */
+
     button[data-baseweb="tab"] p {
         color: black !important;
         font-weight: bold !important;
+        font-size: 18px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. HELPER: BLACK CHART THEME ---
+# --- 3. HELPER: HIGH-CONTRAST CHART THEME ---
 def apply_black_theme(fig):
     fig.update_layout(
         font=dict(color="black", size=13, family="Arial Black"),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0.05)',
-        margin=dict(l=50, r=50, t=50, b=50),
-        legend=dict(font=dict(color="black"))
+        margin=dict(l=60, r=60, t=50, b=60), # Increased margins for labels
+        legend=dict(font=dict(color="black", size=12))
     )
+    # Thick black axis lines and bold titles
     fig.update_xaxes(
         showline=True, linewidth=3, linecolor='black', 
         tickfont=dict(color='black', size=12, family="Arial Black"),
         title_font=dict(color='black', size=14, family="Arial Black"),
-        gridcolor='rgba(0,0,0,0.1)'
+        gridcolor='rgba(0,0,0,0.1)',
+        zeroline=True, zerolinewidth=2, zerolinecolor='black'
     )
     fig.update_yaxes(
         showline=True, linewidth=3, linecolor='black', 
         tickfont=dict(color='black', size=12, family="Arial Black"),
         title_font=dict(color='black', size=14, family="Arial Black"),
-        gridcolor='rgba(0,0,0,0.1)'
+        gridcolor='rgba(0,0,0,0.1)',
+        zeroline=True, zerolinewidth=2, zerolinecolor='black'
     )
     return fig
 
@@ -146,7 +154,7 @@ with tab2:
 
     st.subheader("Yield Distribution Map")
     fig_map = px.choropleth(df, locations="Area", locationmode='country names', color="hg/ha_yield", color_continuous_scale="Viridis")
-    fig_map.update_layout(font=dict(color="black", family="Arial Black"), paper_bgcolor='rgba(0,0,0,0)')
+    fig_map.update_layout(font=dict(color="black", family="Arial Black"), paper_bgcolor='rgba(0,0,0,0)', margin=dict(t=50, b=50))
     st.plotly_chart(fig_map, use_container_width=True)
 
     c1, c2 = st.columns(2)
@@ -154,13 +162,13 @@ with tab2:
         st.subheader("Yield Trend (Per Year)")
         yearly = df.groupby('Year')['hg/ha_yield'].mean().reset_index()
         fig3 = px.line(yearly, x='Year', y='hg/ha_yield', markers=True, text=yearly['hg/ha_yield'].apply(lambda x: f'{x/1000:.1f}k'))
-        fig3.update_traces(textposition="top center")
+        fig3.update_traces(textposition="top center", line=dict(width=4))
         st.plotly_chart(apply_black_theme(fig3), use_container_width=True)
     with c2:
         st.subheader("Yield Growth %")
         yearly['Growth'] = (yearly['hg/ha_yield'].pct_change() * 100).round(1)
         fig4 = px.line(yearly.dropna(), x='Year', y='Growth', markers=True, text=yearly['Growth'].dropna().apply(lambda x: f'{x}%'))
-        fig4.update_traces(textposition="top center")
+        fig4.update_traces(textposition="top center", line=dict(width=4, color='green'))
         st.plotly_chart(apply_black_theme(fig4), use_container_width=True)
 
 # ---------------- TAB 3: CLIMATE IMPACT ----------------
@@ -178,9 +186,9 @@ with tab3:
         st.subheader("Yield vs Rainfall Trend")
         rain_trend = df.groupby('Year').agg({'hg/ha_yield':'mean', 'average_rain_fall_mm_per_year':'mean'}).reset_index()
         fig5 = go.Figure()
-        fig5.add_trace(go.Scatter(x=rain_trend['Year'], y=rain_trend['hg/ha_yield'], name="Yield", fill='tozeroy', line=dict(color='black')))
-        fig5.add_trace(go.Scatter(x=rain_trend['Year'], y=rain_trend['average_rain_fall_mm_per_year'], name="Rainfall", yaxis="y2", line=dict(color='blue')))
-        fig5.update_layout(yaxis2=dict(overlaying='y', side='right', tickfont=dict(color='black')))
+        fig5.add_trace(go.Scatter(x=rain_trend['Year'], y=rain_trend['hg/ha_yield'], name="Yield", fill='tozeroy', line=dict(color='black', width=3)))
+        fig5.add_trace(go.Scatter(x=rain_trend['Year'], y=rain_trend['average_rain_fall_mm_per_year'], name="Rainfall", yaxis="y2", line=dict(color='blue', width=3)))
+        fig5.update_layout(yaxis2=dict(overlaying='y', side='right', tickfont=dict(color='blue', family="Arial Black"), title="Rainfall (mm)"))
         st.plotly_chart(apply_black_theme(fig5), use_container_width=True)
     with r1c2:
         st.subheader("Impact of Rainfall on Yield")
@@ -192,9 +200,9 @@ with tab3:
         st.subheader("Yield vs Temp Trend")
         temp_trend = df.groupby('Year').agg({'hg/ha_yield':'mean', 'avg_temp':'mean'}).reset_index()
         fig7 = go.Figure()
-        fig7.add_trace(go.Scatter(x=temp_trend['Year'], y=temp_trend['hg/ha_yield'], name="Yield", line=dict(color='black')))
-        fig7.add_trace(go.Scatter(x=temp_trend['Year'], y=temp_trend['avg_temp'], name="Temp", yaxis="y2", line=dict(color='red')))
-        fig7.update_layout(yaxis2=dict(overlaying='y', side='right', tickfont=dict(color='black')))
+        fig7.add_trace(go.Scatter(x=temp_trend['Year'], y=temp_trend['hg/ha_yield'], name="Yield", line=dict(color='black', width=3)))
+        fig7.add_trace(go.Scatter(x=temp_trend['Year'], y=temp_trend['avg_temp'], name="Temp", yaxis="y2", line=dict(color='red', width=3)))
+        fig7.update_layout(yaxis2=dict(overlaying='y', side='right', tickfont=dict(color='red', family="Arial Black"), title="Temp (°C)"))
         st.plotly_chart(apply_black_theme(fig7), use_container_width=True)
     with r2c2:
         st.subheader("Impact of Temperature on Yield")
