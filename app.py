@@ -1,45 +1,78 @@
 import streamlit as st
+import numpy as np
 import pickle
 import os
-import numpy as np
 
-# --- 1. SETUP PATHS ---
-# This ensures the script finds the files even when run from the root
-current_dir = os.path.dirname(__file__)
-model_path = os.path.join(current_dir, "..", "Rs.pkl")
-preprocessor_path = os.path.join(current_dir, "..", "preprocessor.pkl")
+# ---------------- 1. Simple Pathing ---------------- #
+# Since app.py and the .pkl files are in the SAME folder, 
+# we just use the filename directly.
+MODEL_FILE = "Rs.pkl"
+PREP_FILE = "preprocessor.pkl"
 
-# --- 2. LOAD MODELS ---
-def load_data():
-    with open(model_path, 'rb') as f:
+# ---------------- 2. Background Styling ---------------- #
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-image: url("https://images.unsplash.com/photo-1500382017468-9049fed747ef");
+        background-size: cover;
+    }
+    label, h1 { color: black !important; font-weight: bold; }
+    .result-box {
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 15px;
+        border-radius: 10px;
+        color: black;
+        text-align: center;
+        font-weight: bold;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# ---------------- 3. Load Models ---------------- #
+@st.cache_resource
+def load_models():
+    # Double check if files exist in the current directory
+    if not os.path.exists(MODEL_FILE) or not os.path.exists(PREP_FILE):
+        return None, None
+    
+    with open(MODEL_FILE, "rb") as f:
         model = pickle.load(f)
-    with open(preprocessor_path, 'rb') as f:
+    with open(PREP_FILE, "rb") as f:
         preprocessor = pickle.load(f)
     return model, preprocessor
 
-try:
-    model, preprocessor = load_data()
-except FileNotFoundError:
-    st.error("Error: Model files not found. Check if Rs.pkl is in the root folder.")
+model, preprocessor = load_models()
+
+if model is None:
+    st.error(f"Error: Could not find {MODEL_FILE} or {PREP_FILE} in the main folder.")
+    st.info("Current files in folder: " + str(os.listdir(".")))
     st.stop()
 
-# --- 3. PAGE UI ---
-st.title("🔮 Predictive Analytics Page")
-st.write("Enter the details below to get a prediction.")
+# ---------------- 4. UI ---------------- #
+st.title("🌾 Crop Yield Prediction")
 
-# Example Input Fields (Adjust these to match your model's features)
-feature_1 = st.number_input("Feature 1", value=0.0)
-feature_2 = st.number_input("Feature 2", value=0.0)
+col1, col2 = st.columns(2)
+with col1:
+    Area = st.text_input("Area")
+    Item = st.text_input("Crop Type")
+    Year = st.number_input("Year", 1990, 2030, 2024)
+with col2:
+    Rainfall = st.number_input("Rainfall (mm/year)")
+    Temp = st.number_input("Temp (°C)")
+    Pesticide = st.number_input("Pesticide (tonnes)")
 
-if st.button("Predict"):
-    # Prepare the input for the model
-    # Note: Ensure the shape matches what your 'preprocessor' expects
-    input_data = np.array([[feature_1, feature_2]])
-    
-    # Apply transformation if your preprocessor is a scaler/encoder
-    transformed_data = preprocessor.transform(input_data)
-    
-    # Make Prediction
-    prediction = model.predict(transformed_data)
-    
-    st.success(f"The predicted value is: {prediction[0]}")
+if st.button("Predict Yield"):
+    try:
+        features = np.array([[Area, Item, Year, Rainfall, Temp, Pesticide]], dtype=object)
+        transformed = preprocessor.transform(features)
+        prediction = model.predict(transformed)
+        
+        st.markdown(
+            f"<div class='result-box'>Predicted Yield: {round(float(prediction[0]), 2)} hg/ha</div>",
+            unsafe_allow_html=True
+        )
+    except Exception as e:
+        st.error(f"Prediction error: {e}")
