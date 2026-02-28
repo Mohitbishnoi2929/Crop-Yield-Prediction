@@ -9,7 +9,6 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     if st.button("🔮 Prediction", use_container_width=True):
-        # NOTE: This string must match the filename in the 'pages' folder exactly
         st.switch_page("pages/Predictive_page.py")
 
 with col2:
