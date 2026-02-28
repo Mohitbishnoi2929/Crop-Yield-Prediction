@@ -1,6 +1,7 @@
-Flask
-numpy
+streamlit
 pandas
+numpy
 scikit-learn
-gunicorn
-
+plotly
+matplotlib
+seaborn
