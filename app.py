@@ -18,14 +18,12 @@ st.markdown("""
         background-position: center;
         background-attachment: fixed;
     }
-    /* Light semi-transparent overlay to make black text pop */
     .main .block-container {
         background-color: rgba(255, 255, 255, 0.6);
         border-radius: 20px;
         padding: 30px;
         margin-top: 20px;
     }
-    /* Black text for all labels and headers */
     [data-testid="stMetricValue"], [data-testid="stMetricLabel"], 
     h1, h2, h3, p, label, .stSelectbox label, .stNumberInput label { 
         color: black !important; 
@@ -41,8 +39,6 @@ st.markdown("""
         color: black;
         font-weight: bold;
     }
-    /* Ensuring chart text is also black */
-    .js-plotly-plot .plotly .main-svg { background: transparent !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -65,6 +61,18 @@ def load_models():
 
 df = load_data()
 model, preprocessor = load_models()
+
+# Function to force black axes on any plotly figure
+def style_chrome(fig):
+    fig.update_layout(
+        font=dict(color="black"),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=20, r=20, t=40, b=20)
+    )
+    fig.update_xaxes(showline=True, linewidth=2, linecolor='black', gridcolor='rgba(0,0,0,0.1)', tickfont=dict(color='black'), title_font=dict(color='black'))
+    fig.update_yaxes(showline=True, linewidth=2, linecolor='black', gridcolor='rgba(0,0,0,0.1)', tickfont=dict(color='black'), title_font=dict(color='black'))
+    return fig
 
 # --- 4. TABS ---
 tab1, tab2, tab3 = st.tabs(["🔮 Yield Predictor", "🌍 Global Performance", "🌡️ Climate Impact"])
@@ -92,55 +100,48 @@ with tab1:
 with tab2:
     st.title("📊 Global Crop Performance")
     
-    # KPI Row
     k1, k2, k3, k4, k5, k6 = st.columns(6)
-    total_yield = df['hg/ha_yield'].sum()
-    k1.metric("Total Production", f"{total_yield/1e9:.1f}B")
-    k2.metric("Avg Production", f"{int(df['hg/ha_yield'].mean())}")
-    k3.metric("Total Countries", df['Area'].nunique())
-    k4.metric("Total Crops", df['Item'].nunique())
-    k5.metric("Pest. Efficiency", "2.08") 
-    k6.metric("Total Pesticide", f"{df['pesticides_tonnes'].sum()/1e6:.1f}M")
+    k1.metric("Total Prod.", f"{df['hg/ha_yield'].sum()/1e9:.1f}B")
+    k2.metric("Avg Yield", f"{int(df['hg/ha_yield'].mean())}")
+    k3.metric("Countries", df['Area'].nunique())
+    k4.metric("Crops", df['Item'].nunique())
+    k5.metric("Efficiency", "2.08") 
+    k6.metric("Total Pest.", f"{df['pesticides_tonnes'].sum()/1e6:.1f}M")
 
-    col_left, col_right = st.columns([3, 2])
-    with col_left:
+    col_l, col_r = st.columns([3, 2])
+    with col_l:
         st.subheader("Crop-wise Yield vs Pesticide Usage")
         crop_agg = df.groupby('Item').agg({'hg/ha_yield':'mean', 'pesticides_tonnes':'mean'}).reset_index()
-        fig1 = px.bar(crop_agg, x='Item', y=['hg/ha_yield', 'pesticides_tonnes'], 
-                      barmode='group', text_auto='.2s')
-        fig1.update_layout(font=dict(color="black"), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig1, use_container_width=True)
+        fig1 = px.bar(crop_agg, x='Item', y=['hg/ha_yield', 'pesticides_tonnes'], barmode='group', text_auto='.2s')
+        st.plotly_chart(style_chrome(fig1), use_container_width=True)
 
-    with col_right:
-        top_bottom = st.radio("Show Countries:", ["Top 10", "Bottom 10"], horizontal=True)
+    with col_r:
+        top_bottom = st.radio("Rank Countries:", ["Top 10", "Bottom 10"], horizontal=True)
         is_asc = (top_bottom == "Bottom 10")
         country_yield = df.groupby('Area')['hg/ha_yield'].mean().sort_values(ascending=is_asc).head(10).reset_index()
-        
-        # Adding Percentage Calculation
         total_top_sum = country_yield['hg/ha_yield'].sum()
         country_yield['Percentage'] = (country_yield['hg/ha_yield'] / total_top_sum * 100).round(2)
-        
-        fig2 = px.bar(country_yield, x='hg/ha_yield', y='Area', orientation='h', 
-                      text=country_yield['Percentage'].apply(lambda x: f'{x}%'))
-        fig2.update_layout(font=dict(color="black"), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig2, use_container_width=True)
+        fig2 = px.bar(country_yield, x='hg/ha_yield', y='Area', orientation='h', text=country_yield['Percentage'].apply(lambda x: f'{x}%'))
+        st.plotly_chart(style_chrome(fig2), use_container_width=True)
+
+    st.subheader("Yield Distribution by Country")
+    fig_map = px.choropleth(df, locations="Area", locationmode='country names', color="hg/ha_yield", color_continuous_scale="YlOrBr")
+    fig_map.update_layout(font=dict(color="black"), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+    st.plotly_chart(fig_map, use_container_width=True)
 
     c1, c2 = st.columns(2)
     with c1:
-        st.subheader("Yield Trend (hg/ha)")
+        st.subheader("Yield Per Year")
         yearly_yield = df.groupby('Year')['hg/ha_yield'].mean().reset_index()
         fig3 = px.line(yearly_yield, x='Year', y='hg/ha_yield', markers=True, text=yearly_yield['hg/ha_yield'].apply(lambda x: f'{x/1000:.1f}k'))
         fig3.update_traces(textposition="top center")
-        fig3.update_layout(font=dict(color="black"), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig3, use_container_width=True)
+        st.plotly_chart(style_chrome(fig3), use_container_width=True)
     with c2:
         st.subheader("Yield Growth %")
         yearly_yield['Growth'] = (yearly_yield['hg/ha_yield'].pct_change() * 100).round(2)
-        fig4 = px.line(yearly_yield.dropna(), x='Year', y='Growth', markers=True, 
-                       text=yearly_yield['Growth'].dropna().apply(lambda x: f'{x}%'))
+        fig4 = px.line(yearly_yield.dropna(), x='Year', y='Growth', markers=True, text=yearly_yield['Growth'].dropna().apply(lambda x: f'{x}%'))
         fig4.update_traces(textposition="top center")
-        fig4.update_layout(font=dict(color="black"), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig4, use_container_width=True)
+        st.plotly_chart(style_chrome(fig4), use_container_width=True)
 
 # ---------------- TAB 3: CLIMATE IMPACT ----------------
 with tab3:
@@ -148,23 +149,34 @@ with tab3:
     
     ck1, ck2, ck3, ck4 = st.columns(4)
     ck1.metric("Avg Rainfall", f"{int(df['average_rain_fall_mm_per_year'].mean())} mm")
-    ck2.metric("Avg Temperature", f"{round(df['avg_temp'].mean(), 2)} °C")
-    ck3.metric("Rainfall Efficiency", "67.06%")
+    ck2.metric("Avg Temp", f"{round(df['avg_temp'].mean(), 2)} °C")
+    ck3.metric("Rain Efficiency", "67.06%")
     ck4.metric("Max Production", f"{int(df['hg/ha_yield'].max()/1000)}K")
 
-    row1_col1, row1_col2 = st.columns(2)
-    with row1_col1:
+    r1c1, r1c2 = st.columns(2)
+    with r1c1:
         st.subheader("Yield vs Rainfall Trend")
         rain_trend = df.groupby('Year').agg({'hg/ha_yield':'mean', 'average_rain_fall_mm_per_year':'mean'}).reset_index()
         fig5 = go.Figure()
         fig5.add_trace(go.Scatter(x=rain_trend['Year'], y=rain_trend['hg/ha_yield'], name="Yield", fill='tozeroy'))
         fig5.add_trace(go.Scatter(x=rain_trend['Year'], y=rain_trend['average_rain_fall_mm_per_year'], name="Rainfall", yaxis="y2"))
-        fig5.update_layout(font=dict(color="black"), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                          yaxis2=dict(overlaying='y', side='right'))
-        st.plotly_chart(fig5, use_container_width=True)
-        
-    with row1_col2:
+        fig5.update_layout(yaxis2=dict(overlaying='y', side='right', tickfont=dict(color='black')))
+        st.plotly_chart(style_chrome(fig5), use_container_width=True)
+    with r1c2:
         st.subheader("Impact of Rainfall on Yield")
-        fig6 = px.scatter(df, x="average_rain_fall_mm_per_year", y="hg/ha_yield", color="Item")
-        fig6.update_layout(font=dict(color="black"), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig6, use_container_width=True)
+        fig6 = px.scatter(df, x="average_rain_fall_mm_per_year", y="hg/ha_yield", color="Item", opacity=0.6)
+        st.plotly_chart(style_chrome(fig6), use_container_width=True)
+
+    r2c1, r2c2 = st.columns(2)
+    with r2c1:
+        st.subheader("Yield vs Temperature Trend")
+        temp_trend = df.groupby('Year').agg({'hg/ha_yield':'mean', 'avg_temp':'mean'}).reset_index()
+        fig7 = go.Figure()
+        fig7.add_trace(go.Scatter(x=temp_trend['Year'], y=temp_trend['hg/ha_yield'], name="Yield", line=dict(color='orange')))
+        fig7.add_trace(go.Scatter(x=temp_trend['Year'], y=temp_trend['avg_temp'], name="Temp", yaxis="y2", line=dict(color='red')))
+        fig7.update_layout(yaxis2=dict(overlaying='y', side='right', tickfont=dict(color='black')))
+        st.plotly_chart(style_chrome(fig7), use_container_width=True)
+    with r2c2:
+        st.subheader("Impact of Temperature on Yield")
+        fig8 = px.scatter(df, x="avg_temp", y="hg/ha_yield", color="Item", opacity=0.6)
+        st.plotly_chart(style_chrome(fig8), use_container_width=True)
